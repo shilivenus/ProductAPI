@@ -175,8 +175,15 @@ namespace ProductsAPI.Repositories
 
                 using (var db = new Database(connection, DatabaseType.SQLite))
                 {
+                    var stringId = $"'{id}'";
+
+                    var parameters = new
+                    {
+                        Id = stringId.ToUpper()
+                    };
+
                     var products = db.FetchOneToMany<Product>(x => x.ProductOptions,
-                        $"select p.*, po.* from Products p left join Productoptions po on p.Id = po.ProductId where p.Id = '{id}' collate nocase");
+                        $"select p.*, po.* from Products p left join Productoptions po on p.Id = po.ProductId where p.Id = @{nameof(parameters.Id)}", parameters);
 
                     return Task.FromResult(products.FirstOrDefault());
                 }
