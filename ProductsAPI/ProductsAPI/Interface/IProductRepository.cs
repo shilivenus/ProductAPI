@@ -10,8 +10,11 @@ namespace ProductsAPI.Interface
     {
         Task<List<Product>> GetAllProducts();
         Task<Product> GetProductById(Guid id);
-        Task CreateProduct(Product product);
-        Task UpdateProduct(Product product);
-        Task DeleteProduct(Guid id);
+        Task<bool> CreateProduct(Product product);
+        Task<bool> UpdateProduct(Product product);
+        Task<bool> DeleteProduct(Product product);
+        Task<bool> CreateOption(ProductOption productOption);
+        Task<bool> UpdateOption(ProductOption productOption);
+        Task<bool> DeleteOption(Guid productOptionId);
     }
 }

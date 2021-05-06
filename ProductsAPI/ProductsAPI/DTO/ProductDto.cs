@@ -21,6 +21,16 @@ namespace ProductsAPI.DTO
 
         [RegularExpression(@"^(?!^0\.00$)(([1-9][\d]{0,6})|([0]))\.[\d]{2}$")]
         public decimal DeliveryPrice { get; set; }
-        public List<ProductOption> ProductOptions { get; set; }
+        public IList<ProductOptionDto> ProductOptions { get; set; }
+
+        public ProductDto(Guid id, string name, string description, decimal price, decimal deliveryPrice, IList<ProductOptionDto> productOptions = null)
+        {
+            Id = id;
+            Name = name;
+            Description = description;
+            Price = price;
+            DeliveryPrice = deliveryPrice;
+            ProductOptions = productOptions;
+        }
     }
 }

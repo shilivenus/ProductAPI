@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using NPoco;
 using ProductsAPI.Interface;
 using ProductsAPI.Models;
@@ -20,8 +19,38 @@ namespace ProductsAPI.Repositories
             _connectionString = configuration.GetConnectionString("ProductDB");
         }
 
-        public Task CreateProduct(Product product)
+        public Task<bool> CreateOption(ProductOption productOption)
         {
+            var isSuccess = false;
+            using (var connection = new SqliteConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var db = new Database(connection, DatabaseType.SQLite))
+                {
+                    db.BeginTransaction();
+                    try
+                    {
+                        db.Execute($"insert into ProductOptions (Id, ProductId, Name, Description) values ('{productOption.Id}', '{productOption.ProductId}', '{productOption.Name}', '{productOption.Description}')");
+                    }
+                    catch (Exception e)
+                    {
+                        db.AbortTransaction();
+                        return Task.FromResult(isSuccess);
+                    }
+
+                    db.CompleteTransaction();
+
+                    isSuccess = true;
+
+                    return Task.FromResult(isSuccess);
+                }
+            }
+        }
+
+        public Task<bool> CreateProduct(Product product)
+        {
+            var isSuccess = false;
             using (var connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
@@ -44,19 +73,82 @@ namespace ProductsAPI.Repositories
                     catch (Exception e)
                     {
                         db.AbortTransaction();
-                        return Task.FromResult(product);
+                        return Task.FromResult(isSuccess);
                     }
 
                     db.CompleteTransaction();
 
-                    return Task.FromResult(product);                 
+                    isSuccess = true;
+
+                    return Task.FromResult(isSuccess);                 
                 }
             }
         }
 
-        public Task DeleteProduct(Guid id)
+        public Task<bool> DeleteOption(Guid productOptionId)
         {
-            throw new NotImplementedException();
+            var isSuccess = false;
+            using (var connection = new SqliteConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var db = new Database(connection, DatabaseType.SQLite))
+                {
+                    db.BeginTransaction();
+                    try
+                    {
+                        db.Execute($"delete from productoptions where id = '{productOptionId}' collate nocase");
+                    }
+                    catch (Exception e)
+                    {
+                        db.AbortTransaction();
+                        return Task.FromResult(isSuccess);
+                    }
+
+                    db.CompleteTransaction();
+
+                    isSuccess = true;
+
+                    return Task.FromResult(isSuccess);
+                }
+            }
+        }
+
+        public Task<bool> DeleteProduct(Product product)
+        {
+            var isSuccess = false;
+            using (var connection = new SqliteConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var db = new Database(connection, DatabaseType.SQLite))
+                {
+                    db.BeginTransaction();
+                    try
+                    {
+                        if (product.ProductOptions?.Count > 0)
+                        {
+                            foreach (var option in product.ProductOptions)
+                            {
+                                db.Execute($"delete from productoptions where id = '{option.Id}' collate nocase");
+                            }
+                        }
+
+                        db.Execute($"delete from Products where id = '{product.Id}' collate nocase");
+                    }
+                    catch (Exception e)
+                    {
+                        db.AbortTransaction();
+                        return Task.FromResult(isSuccess);
+                    }
+
+                    db.CompleteTransaction();
+
+                    isSuccess = true;
+
+                    return Task.FromResult(isSuccess);
+                }
+            }
         }
 
         public Task<List<Product>> GetAllProducts()
@@ -68,7 +160,7 @@ namespace ProductsAPI.Repositories
                 using (var db = new Database(connection, DatabaseType.SQLite))
                 {
                     var products = db.FetchOneToMany<Product>(x => x.ProductOptions,
-                        "select p.*, po.* from Products p inner join Productoptions po on p.Id = po.ProductId order by p.Id");
+                        "select p.*, po.* from Products p left join Productoptions po on p.Id = po.ProductId order by p.Id");
 
                     return Task.FromResult(products);
                 }
@@ -84,16 +176,69 @@ namespace ProductsAPI.Repositories
                 using (var db = new Database(connection, DatabaseType.SQLite))
                 {
                     var products = db.FetchOneToMany<Product>(x => x.ProductOptions,
-                        $"select p.*, po.* from Products p inner join Productoptions po on p.Id = po.ProductId where p.Id = '{id}' collate nocase");
+                        $"select p.*, po.* from Products p left join Productoptions po on p.Id = po.ProductId where p.Id = '{id}' collate nocase");
 
                     return Task.FromResult(products.FirstOrDefault());
                 }
             }
         }
 
-        public Task UpdateProduct(Product product)
+        public Task<bool> UpdateOption(ProductOption productOption)
         {
-            throw new NotImplementedException();
+            var isSuccess = false;
+            using (var connection = new SqliteConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var db = new Database(connection, DatabaseType.SQLite))
+                {
+                    db.BeginTransaction();
+                    try
+                    {
+                        db.Execute($"update productoptions set name = '{productOption.Name}', description = '{productOption.Description}' where id = '{productOption.Id}' collate nocase");
+                    }
+                    catch (Exception e)
+                    {
+                        db.AbortTransaction();
+                        return Task.FromResult(isSuccess);
+                    }
+
+                    db.CompleteTransaction();
+
+                    isSuccess = true;
+
+                    return Task.FromResult(isSuccess);
+                }
+            }
+        }
+
+        public Task<bool> UpdateProduct(Product product)
+        {
+            var isSuccess = false;
+            using (var connection = new SqliteConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var db = new Database(connection, DatabaseType.SQLite))
+                {
+                    db.BeginTransaction();
+                    try
+                    {
+                        db.Execute($"update Products set name = '{product.Name}', description = '{product.Description}', price = {product.Price}, deliveryprice = {product.DeliveryPrice} where id = '{product.Id}' collate nocase");
+                    }
+                    catch (Exception e)
+                    {
+                        db.AbortTransaction();
+                        return Task.FromResult(isSuccess);
+                    }
+
+                    db.CompleteTransaction();
+
+                    isSuccess = true;
+
+                    return Task.FromResult(isSuccess);
+                }
+            }
         }
     }
 }

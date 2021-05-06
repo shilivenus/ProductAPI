@@ -8,7 +8,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using ProductsAPI.Interface;
+using ProductsAPI.Mapper;
 using ProductsAPI.Repositories;
+using ProductsAPI.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,6 +37,8 @@ namespace ProductsAPI
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "ProductsAPI", Version = "v1" });
             });
             services.AddTransient<IProductRepository, ProductRepository>();
+            services.AddTransient<IMapper, ProductMapper>();
+            services.AddTransient<IProductService, ProductService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
