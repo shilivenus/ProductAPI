@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using ProductsAPI.DataAccess;
+using ProductsAPI.ExceptionHandler;
 using ProductsAPI.Interface;
 using ProductsAPI.Mapper;
 using ProductsAPI.Repositories;
@@ -57,6 +58,11 @@ namespace ProductsAPI
                     c.SwaggerEndpoint("v1/swagger.json", "ProductsAPI v1");
                 });
             }
+
+            app.UseExceptionHandler(new ExceptionHandlerOptions
+            {
+                ExceptionHandler = JsonExceptionHandler.HandleExceptionAsync
+            });
 
             app.UseHttpsRedirection();
 
