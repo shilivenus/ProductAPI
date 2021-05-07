@@ -19,9 +19,8 @@ namespace ProductsAPI.Repositories
             _connectionString = configuration.GetConnectionString("ProductDB");
         }
 
-        public Task<bool> CreateOption(ProductOption productOption)
+        public async Task<int> CreateOption(ProductOption productOption)
         {
-            var isSuccess = false;
             using (var connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
@@ -29,28 +28,27 @@ namespace ProductsAPI.Repositories
                 using (var db = new Database(connection, DatabaseType.SQLite))
                 {
                     db.BeginTransaction();
+                    int result;
+
                     try
                     {
-                        db.Execute($"insert into ProductOptions (Id, ProductId, Name, Description) values ('{productOption.Id}', '{productOption.ProductId}', '{productOption.Name}', '{productOption.Description}')");
+                        result = await db.ExecuteAsync($"insert into ProductOptions (Id, ProductId, Name, Description) values ('{productOption.Id}', '{productOption.ProductId}', '{productOption.Name}', '{productOption.Description}')");
                     }
                     catch (Exception e)
                     {
                         db.AbortTransaction();
-                        return Task.FromResult(isSuccess);
+                        throw;
                     }
 
                     db.CompleteTransaction();
 
-                    isSuccess = true;
-
-                    return Task.FromResult(isSuccess);
+                    return result;
                 }
             }
         }
 
-        public Task<bool> CreateProduct(Product product)
+        public async Task<int> CreateProduct(Product product)
         {
-            var isSuccess = false;
             using (var connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
@@ -58,36 +56,35 @@ namespace ProductsAPI.Repositories
                 using (var db = new Database(connection, DatabaseType.SQLite))
                 {
                     db.BeginTransaction();
+                    int result;
+
                     try
                     {
-                        db.Execute($"insert into Products (Id, Name, Description, Price, DeliveryPrice) values ('{product.Id}', '{product.Name}', '{product.Description}', {product.Price}, {product.DeliveryPrice})");
+                        result = await db.ExecuteAsync($"insert into Products (Id, Name, Description, Price, DeliveryPrice) values ('{product.Id}', '{product.Name}', '{product.Description}', {product.Price}, {product.DeliveryPrice})");
 
                         if(product.ProductOptions?.Count > 0)
                         {
                             foreach(var option in product.ProductOptions)
                             {
-                                db.Execute($"insert into ProductOptions (Id, ProductId, Name, Description) values ('{option.Id}', '{option.ProductId}', '{option.Name}', '{option.Description}')");
+                                result += await db.ExecuteAsync($"insert into ProductOptions (Id, ProductId, Name, Description) values ('{option.Id}', '{option.ProductId}', '{option.Name}', '{option.Description}')");
                             }
                         }
                     }
                     catch (Exception e)
                     {
                         db.AbortTransaction();
-                        return Task.FromResult(isSuccess);
+                        throw;
                     }
 
                     db.CompleteTransaction();
 
-                    isSuccess = true;
-
-                    return Task.FromResult(isSuccess);                 
+                    return result;
                 }
             }
         }
 
-        public Task<bool> DeleteOption(Guid productOptionId)
+        public async Task<int> DeleteOption(Guid productOptionId)
         {
-            var isSuccess = false;
             using (var connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
@@ -95,28 +92,27 @@ namespace ProductsAPI.Repositories
                 using (var db = new Database(connection, DatabaseType.SQLite))
                 {
                     db.BeginTransaction();
+                    int result;
+
                     try
                     {
-                        db.Execute($"delete from productoptions where id = '{productOptionId}' collate nocase");
+                        result = await db.ExecuteAsync($"delete from productoptions where id = '{productOptionId}' collate nocase");
                     }
                     catch (Exception e)
                     {
                         db.AbortTransaction();
-                        return Task.FromResult(isSuccess);
+                        throw;
                     }
 
                     db.CompleteTransaction();
 
-                    isSuccess = true;
-
-                    return Task.FromResult(isSuccess);
+                    return result;
                 }
             }
         }
 
-        public Task<bool> DeleteProduct(Product product)
+        public async Task<int> DeleteProduct(Product product)
         {
-            var isSuccess = false;
             using (var connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
@@ -124,34 +120,34 @@ namespace ProductsAPI.Repositories
                 using (var db = new Database(connection, DatabaseType.SQLite))
                 {
                     db.BeginTransaction();
+                    int result = -1;
+
                     try
                     {
                         if (product.ProductOptions?.Count > 0)
                         {
                             foreach (var option in product.ProductOptions)
                             {
-                                db.Execute($"delete from productoptions where id = '{option.Id}' collate nocase");
+                                result = await db.ExecuteAsync($"delete from productoptions where id = '{option.Id}' collate nocase");
                             }
                         }
 
-                        db.Execute($"delete from Products where id = '{product.Id}' collate nocase");
+                        result += await db.ExecuteAsync($"delete from Products where id = '{product.Id}' collate nocase");
                     }
                     catch (Exception e)
                     {
                         db.AbortTransaction();
-                        return Task.FromResult(isSuccess);
+                        throw;
                     }
 
                     db.CompleteTransaction();
 
-                    isSuccess = true;
-
-                    return Task.FromResult(isSuccess);
+                    return result;
                 }
             }
         }
 
-        public Task<List<Product>> GetAllProducts()
+        public List<Product> GetAllProducts()
         {
             using (var connection = new SqliteConnection(_connectionString))
             {
@@ -159,15 +155,13 @@ namespace ProductsAPI.Repositories
 
                 using (var db = new Database(connection, DatabaseType.SQLite))
                 {
-                    var products = db.FetchOneToMany<Product>(x => x.ProductOptions,
+                    return db.FetchOneToMany<Product>(x => x.ProductOptions,
                         "select p.*, po.* from Products p left join Productoptions po on p.Id = po.ProductId order by p.Id");
-
-                    return Task.FromResult(products);
                 }
             }
         }
 
-        public Task<Product> GetProductById(Guid id)
+        public Product GetProductById(Guid id)
         {
             using (var connection = new SqliteConnection(_connectionString))
             {
@@ -175,24 +169,14 @@ namespace ProductsAPI.Repositories
 
                 using (var db = new Database(connection, DatabaseType.SQLite))
                 {
-                    var stringId = $"'{id}'";
-
-                    var parameters = new
-                    {
-                        Id = stringId.ToUpper()
-                    };
-
-                    var products = db.FetchOneToMany<Product>(x => x.ProductOptions,
-                        $"select p.*, po.* from Products p left join Productoptions po on p.Id = po.ProductId where p.Id = @{nameof(parameters.Id)}", parameters);
-
-                    return Task.FromResult(products.FirstOrDefault());
+                    return db.FetchOneToMany<Product>(x => x.ProductOptions,
+                        $"select p.*, po.* from Products p left join Productoptions po on p.Id = po.ProductId where p.Id = '{id}' collate nocase").FirstOrDefault();
                 }
             }
         }
 
-        public Task<bool> UpdateOption(ProductOption productOption)
+        public async Task<int> UpdateOption(ProductOption productOption)
         {
-            var isSuccess = false;
             using (var connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
@@ -200,28 +184,27 @@ namespace ProductsAPI.Repositories
                 using (var db = new Database(connection, DatabaseType.SQLite))
                 {
                     db.BeginTransaction();
+                    int result;
+
                     try
                     {
-                        db.Execute($"update productoptions set name = '{productOption.Name}', description = '{productOption.Description}' where id = '{productOption.Id}' collate nocase");
+                        result = await db.ExecuteAsync($"update productoptions set name = '{productOption.Name}', description = '{productOption.Description}' where id = '{productOption.Id}' collate nocase");
                     }
                     catch (Exception e)
                     {
                         db.AbortTransaction();
-                        return Task.FromResult(isSuccess);
+                        throw;
                     }
 
                     db.CompleteTransaction();
 
-                    isSuccess = true;
-
-                    return Task.FromResult(isSuccess);
+                    return result;
                 }
             }
         }
 
-        public Task<bool> UpdateProduct(Product product)
+        public async Task<int> UpdateProduct(Product product)
         {
-            var isSuccess = false;
             using (var connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
@@ -229,21 +212,21 @@ namespace ProductsAPI.Repositories
                 using (var db = new Database(connection, DatabaseType.SQLite))
                 {
                     db.BeginTransaction();
+                    int result;
+
                     try
                     {
-                        db.Execute($"update Products set name = '{product.Name}', description = '{product.Description}', price = {product.Price}, deliveryprice = {product.DeliveryPrice} where id = '{product.Id}' collate nocase");
+                        result = await db.ExecuteAsync($"update Products set name = '{product.Name}', description = '{product.Description}', price = {product.Price}, deliveryprice = {product.DeliveryPrice} where id = '{product.Id}' collate nocase");
                     }
                     catch (Exception e)
                     {
                         db.AbortTransaction();
-                        return Task.FromResult(isSuccess);
+                        throw;
                     }
 
                     db.CompleteTransaction();
 
-                    isSuccess = true;
-
-                    return Task.FromResult(isSuccess);
+                    return result;
                 }
             }
         }

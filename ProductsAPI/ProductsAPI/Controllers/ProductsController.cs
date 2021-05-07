@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using ProductsAPI.DTO;
 using ProductsAPI.Interface;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,124 +14,168 @@ namespace ProductsAPI.Controllers
     {
         private readonly IProductService _productService;
         private readonly ILogger<ProductsController> _logger;
+        private readonly IMapper _mapper;
 
-        public ProductsController(IProductService productService, ILogger<ProductsController> logger)
+        public ProductsController(IProductService productService, ILogger<ProductsController> logger, IMapper mapper)
         {
             _productService = productService;
             _logger = logger;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAsync([FromQuery] string name)
+        public IActionResult Get([FromQuery] string name)
         {
             if(name == null)
             {
-                var products = await _productService.FindProduct(null);
+                var products = _productService.FindProduct(null);
 
-                return Ok(products);
+                var productDtos = _mapper.ToProductDtos(products);
+
+                return Ok(productDtos);
             }
             else
             {
-                var products = await _productService.FindProduct(p => p.Name.Equals(name));
+                var products = _productService.FindProduct(p => p.Name.Equals(name));
 
-                return Ok(products);
+                var productDtos = _mapper.ToProductDtos(products);
+
+                return Ok(productDtos);
             }
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetByIdAsync(Guid id)
+        public IActionResult GetById(Guid id)
         {
-            var product = await _productService.GetProductById(id);
+            var product = _productService.GetProductById(id);
 
-            return Ok(product);
+            var productDto = _mapper.ToProductDto(product);
+
+            return Ok(productDto);
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAsync([FromBody] ProductDto productDto)
         {
             if (!ModelState.IsValid)
             {
+                var errors = ModelState.Values.SelectMany(v => v.Errors);
+
+                foreach (var error in errors)
+                    _logger.LogError(error.ErrorMessage);
+
                 return BadRequest(ModelState);
             }
 
-            var result = await _productService.CreateProduct(productDto);
+            var product = _mapper.ToProduct(productDto);
 
-            return result ? Ok() : Conflict();
+            var result = await _productService.CreateProduct(product);
+
+            return Ok(result);
         }
 
-        // GET: ProductsController
-        public ActionResult Index()
-        {
-            return View();
-        }
-
-        // GET: ProductsController/Details/5
-        public ActionResult Details(int id)
-        {
-            return View();
-        }
-
-        // GET: ProductsController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: ProductsController/Create
-        [HttpPost]
+        [HttpPut("{id}")]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] ProductDto productDto)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                var errors = ModelState.Values.SelectMany(v => v.Errors);
+
+                foreach (var error in errors)
+                    _logger.LogError(error.ErrorMessage);
+
+                return BadRequest(ModelState);
             }
-            catch
-            {
-                return View();
-            }
+
+            productDto.Id = id;
+
+            var product = _mapper.ToProduct(productDto);
+
+            var result = await _productService.UpdateProduct(product);
+
+            return Ok(result);
         }
 
-        // GET: ProductsController/Edit/5
-        public ActionResult Edit(int id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAsync(Guid id)
         {
-            return View();
+            var product = _productService.GetProductById(id);
+
+            await _productService.CreateProduct(product);
+
+            return NoContent();
         }
 
-        // POST: ProductsController/Edit/5
-        [HttpPost]
+        [HttpDelete("{id}/options/{optionId}")]
+        public async Task<IActionResult> DeleteOptionAsync(Guid optionId)
+        {
+            await _productService.DeleteOption(optionId);
+
+            return NoContent();
+        }
+
+        [HttpGet("{id}/options")]
+        public IActionResult GetOptionsByProductId(Guid id)
+        {
+            var product = _productService.GetProductById(id);
+
+            var productDto = _mapper.ToProductDto(product);
+
+            return Ok(productDto.ProductOptions);
+        }
+
+        [HttpGet("{id}/options/{optionId}")]
+        public IActionResult GetOptionsByOptionId(Guid id, Guid optionId)
+        {
+            var product = _productService.GetProductById(id);
+
+            var productDto = _mapper.ToProductDto(product);
+
+            return Ok(productDto.ProductOptions.Where(p => p.Id == optionId));
+        }
+
+        [HttpPost("{id}/options")]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<IActionResult> CreateOptionAsync(Guid id, [FromBody] ProductOptionDto productOptionDto)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                var errors = ModelState.Values.SelectMany(v => v.Errors);
+
+                foreach (var error in errors)
+                    _logger.LogError(error.ErrorMessage);
+
+                return BadRequest(ModelState);
             }
-            catch
-            {
-                return View();
-            }
+
+            var productOption = _mapper.ToProductOption(productOptionDto);
+
+            var result = await _productService.CreateOption(id, productOption);
+
+            return Ok(result);
         }
 
-        // GET: ProductsController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: ProductsController/Delete/5
-        [HttpPost]
+        [HttpPut("{id}/options/{optionId}")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public async Task<IActionResult> UpdateOptionAsync([FromBody] ProductOptionDto productOptionDto)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                var errors = ModelState.Values.SelectMany(v => v.Errors);
+
+                foreach (var error in errors)
+                    _logger.LogError(error.ErrorMessage);
+
+                return BadRequest(ModelState);
             }
-            catch
-            {
-                return View();
-            }
+
+            var productOption = _mapper.ToProductOption(productOptionDto);
+
+            var result = await _productService.UpdateOption(productOption);
+
+            return Ok(result);
         }
     }
 }
