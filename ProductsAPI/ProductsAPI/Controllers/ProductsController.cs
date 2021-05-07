@@ -97,9 +97,9 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(Guid id)
+        public async Task<IActionResult> Delete(Guid id)
         {
-            _productService.DeleteProduct(id);
+            await _productService.DeleteProduct(id);
 
             return NoContent();
         }

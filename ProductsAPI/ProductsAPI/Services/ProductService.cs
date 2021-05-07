@@ -1,5 +1,4 @@
-﻿using ProductsAPI.DTO;
-using ProductsAPI.Interface;
+﻿using ProductsAPI.Interface;
 using ProductsAPI.Models;
 using System;
 using System.Collections.Generic;
@@ -34,11 +33,11 @@ namespace ProductsAPI.Services
             return await _productRepository.DeleteOption(productOptionId);
         }
 
-        public int DeleteProduct(Guid id)
+        public async Task<int> DeleteProduct(Guid id)
         {
             var product = _productRepository.GetProductById(id);
 
-            return _productRepository.DeleteProduct(product.Result);
+            return await _productRepository.DeleteProduct(product.Result);
         }
 
         public async Task<IList<Product>> FindProduct(Predicate<Product> predicate)

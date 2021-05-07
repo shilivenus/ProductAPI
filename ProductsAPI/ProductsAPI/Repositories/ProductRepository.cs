@@ -38,7 +38,7 @@ namespace ProductsAPI.Repositories
             return await _context.SaveChangesAsync();
         }
 
-        public int DeleteProduct(Product product)
+        public async Task<int> DeleteProduct(Product product)
         {
             if (product.ProductOptions?.Count > 0)
             {
@@ -46,7 +46,7 @@ namespace ProductsAPI.Repositories
             }
 
             _context.Products.RemoveRange(product);
-            return _context.SaveChanges();
+            return await _context.SaveChangesAsync();
         }
 
         public async Task<List<Product>> GetAllProducts()
