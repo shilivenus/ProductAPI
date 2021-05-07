@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using ProductsAPI.DataAccess;
 using ProductsAPI.Interface;
 using ProductsAPI.Mapper;
 using ProductsAPI.Repositories;
@@ -32,6 +34,8 @@ namespace ProductsAPI
         {
 
             services.AddControllers();
+            services.AddDbContext<ProductContext>(
+                options => options.UseSqlite(Configuration.GetConnectionString("ProductDB")));
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "ProductsAPI", Version = "v1" });

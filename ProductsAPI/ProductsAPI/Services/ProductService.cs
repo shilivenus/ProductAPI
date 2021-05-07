@@ -34,16 +34,16 @@ namespace ProductsAPI.Services
             return await _productRepository.DeleteOption(productOptionId);
         }
 
-        public async Task<int> DeleteProduct(Guid id)
+        public int DeleteProduct(Guid id)
         {
             var product = _productRepository.GetProductById(id);
 
-            return await _productRepository.DeleteProduct(product);
+            return _productRepository.DeleteProduct(product.Result);
         }
 
-        public IList<Product> FindProduct(Predicate<Product> predicate)
+        public async Task<IList<Product>> FindProduct(Predicate<Product> predicate)
         {
-            var products = _productRepository.GetAllProducts();
+            var products = await _productRepository.GetAllProducts();
 
             if (predicate == null)
             {
@@ -60,9 +60,9 @@ namespace ProductsAPI.Services
             return productsByPredicate;
         }
 
-        public Product GetProductById(Guid id)
+        public async Task<Product> GetProductById(Guid id)
         {
-            return _productRepository.GetProductById(id);
+            return await _productRepository.GetProductById(id);
         }
 
         public async Task<int> UpdateOption(ProductOption productOption)

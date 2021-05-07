@@ -8,11 +8,11 @@ namespace ProductsAPI.Interface
 {
     public interface IProductService
     {
-        IList<Product> FindProduct(Predicate<Product> predicate);
-        Product GetProductById(Guid id);
+        Task<IList<Product>> FindProduct(Predicate<Product> predicate);
+        Task<Product> GetProductById(Guid id);
         Task<int> CreateProduct(Product product);
         Task<int> UpdateProduct(Product product);
-        Task<int> DeleteProduct(Guid id);
+        int DeleteProduct(Guid id);
         Task<int> CreateOption(Guid id, ProductOption productOption);
         Task<int> UpdateOption(ProductOption productOption);
         Task<int> DeleteOption(Guid productOptionId);

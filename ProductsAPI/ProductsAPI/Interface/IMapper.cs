@@ -10,7 +10,6 @@ namespace ProductsAPI.Interface
         ProductOptionDto ToProductOptionDto(ProductOption productOption);
         Product ToProduct(ProductDto productDto);
         ProductDto ToProductDto(Product product);
-        IList<Product> ToProducts(IList<ProductDto> productDtos);
         IList<ProductDto> ToProductDtos(IList<Product> products);
     }
 }

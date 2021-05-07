@@ -24,11 +24,11 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get([FromQuery] string name)
+        public async Task<IActionResult> Get([FromQuery] string name)
         {
             if(name == null)
             {
-                var products = _productService.FindProduct(null);
+                var products = await _productService.FindProduct(null);
 
                 var productDtos = _mapper.ToProductDtos(products);
 
@@ -36,7 +36,7 @@ namespace ProductsAPI.Controllers
             }
             else
             {
-                var products = _productService.FindProduct(p => p.Name.Equals(name));
+                var products = await _productService.FindProduct(p => p.Name.Equals(name));
 
                 var productDtos = _mapper.ToProductDtos(products);
 
@@ -45,9 +45,9 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetById(Guid id)
+        public async Task<IActionResult> GetById(Guid id)
         {
-            var product = _productService.GetProductById(id);
+            var product = await _productService.GetProductById(id);
 
             var productDto = _mapper.ToProductDto(product);
 
@@ -55,7 +55,6 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAsync([FromBody] ProductDto productDto)
         {
             if (!ModelState.IsValid)
@@ -76,7 +75,6 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] ProductDto productDto)
         {
             if (!ModelState.IsValid)
@@ -99,11 +97,9 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAsync(Guid id)
+        public IActionResult Delete(Guid id)
         {
-            var product = _productService.GetProductById(id);
-
-            await _productService.CreateProduct(product);
+            _productService.DeleteProduct(id);
 
             return NoContent();
         }
@@ -117,9 +113,9 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpGet("{id}/options")]
-        public IActionResult GetOptionsByProductId(Guid id)
+        public async Task<IActionResult> GetOptionsByProductId(Guid id)
         {
-            var product = _productService.GetProductById(id);
+            var product = await _productService.GetProductById(id);
 
             var productDto = _mapper.ToProductDto(product);
 
@@ -127,9 +123,9 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpGet("{id}/options/{optionId}")]
-        public IActionResult GetOptionsByOptionId(Guid id, Guid optionId)
+        public async Task<IActionResult> GetOptionsByOptionId(Guid id, Guid optionId)
         {
-            var product = _productService.GetProductById(id);
+            var product = await _productService.GetProductById(id);
 
             var productDto = _mapper.ToProductDto(product);
 
@@ -137,7 +133,6 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpPost("{id}/options")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateOptionAsync(Guid id, [FromBody] ProductOptionDto productOptionDto)
         {
             if (!ModelState.IsValid)
@@ -158,7 +153,6 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpPut("{id}/options/{optionId}")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateOptionAsync([FromBody] ProductOptionDto productOptionDto)
         {
             if (!ModelState.IsValid)
