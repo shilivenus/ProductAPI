@@ -8,13 +8,13 @@ namespace ProductsAPI.Interface
 {
     public interface IProductRepository
     {
-        Task<List<Product>> GetAllProducts();
-        Task<Product> GetProductById(Guid id);
-        Task<int> CreateProduct(Product product);
-        Task<int> UpdateProduct(Product product);
-        Task<int> DeleteProduct(Product product);
-        Task<int> CreateOption(ProductOption productOption);
-        Task<int> UpdateOption(ProductOption productOption);
-        Task<int> DeleteOption(Guid productOptionId);
+        Task<List<Product>> GetAllProductsAsync();
+        Task<Product> GetProductByIdAsync(Guid id);
+        Task<int> CreateProductAsync(Product product);
+        Task<int> UpdateProductAsync(Product product);
+        Task<int> DeleteProductAsync(Product product);
+        Task<int> CreateOptionAsync(ProductOption productOption);
+        Task<int> UpdateOptionAsync(ProductOption productOption);
+        Task<int> DeleteOptionAsync(Guid productOptionId);
     }
 }

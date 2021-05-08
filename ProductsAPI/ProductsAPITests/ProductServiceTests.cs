@@ -21,12 +21,12 @@ namespace ProductsAPITests
             };
 
             var mockProductRepository = new Mock<IProductRepository>();
-            mockProductRepository.Setup(x => x.GetAllProducts()).ReturnsAsync(products);
+            mockProductRepository.Setup(x => x.GetAllProductsAsync()).ReturnsAsync(products);
 
             var service = new ProductService(mockProductRepository.Object);
 
             //Act
-            var result = await service.FindProduct(null);
+            var result = await service.FindProductAsync(null);
 
             //Assert
             Assert.Equal(products[0].Name, result[0].Name);
@@ -50,12 +50,12 @@ namespace ProductsAPITests
             };
 
             var mockProductRepository = new Mock<IProductRepository>();
-            mockProductRepository.Setup(x => x.GetAllProducts()).ReturnsAsync(products);
+            mockProductRepository.Setup(x => x.GetAllProductsAsync()).ReturnsAsync(products);
 
             var service = new ProductService(mockProductRepository.Object);
 
             //Act
-            var result = await service.FindProduct(x => x.Name == "ProductOne");
+            var result = await service.FindProductAsync(x => x.Name == "ProductOne");
 
             //Assert
             Assert.Equal(1, result.Count);

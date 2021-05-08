@@ -34,11 +34,11 @@ namespace ProductsAPI.Controllers
 
             if (name == null)
             {
-                products = await _productService.FindProduct(null);
+                products = await _productService.FindProductAsync(null);
             }
             else
             {
-                products = await _productService.FindProduct(p => p.Name.Equals(name));
+                products = await _productService.FindProductAsync(p => p.Name.Equals(name));
             }
 
             if(products == null)
@@ -59,7 +59,7 @@ namespace ProductsAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByIdAsync(Guid id)
         {
-            var product = await _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
 
             if (product == null)
             {
@@ -81,7 +81,7 @@ namespace ProductsAPI.Controllers
         {
             var product = _mapper.ToProduct(productDto);
 
-            await _productService.CreateProduct(product);
+            await _productService.CreateProductAsync(product);
 
             return Created($"{Request?.Scheme}://{Request?.Host}{Request?.PathBase}{Request?.Path}/{product?.Id}", productDto);
         }
@@ -95,7 +95,7 @@ namespace ProductsAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] ProductDto productDto)
         {
-            var product = await _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
 
             if (product == null)
             {
@@ -106,7 +106,7 @@ namespace ProductsAPI.Controllers
 
             product = _mapper.ToProduct(productDto);
 
-            var result = await _productService.UpdateProduct(product);
+            var result = await _productService.UpdateProductAsync(product);
 
             return Ok(result);
         }
@@ -114,14 +114,14 @@ namespace ProductsAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
-            var product = await _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
 
             if (product == null)
             {
                 return BadRequest($"Product {id} is not exist");
             }
 
-            await _productService.DeleteProduct(id);
+            await _productService.DeleteProductAsync(id);
 
             return NoContent();
         }
@@ -129,14 +129,14 @@ namespace ProductsAPI.Controllers
         [HttpDelete("{id}/options/{optionId}")]
         public async Task<IActionResult> DeleteOptionAsync(Guid id, Guid optionId)
         {
-            var product = await _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
 
             if (product == null)
             {
                 return BadRequest($"Product {id} is not exist");
             }
 
-            await _productService.DeleteOption(optionId);
+            await _productService.DeleteOptionAsync(optionId);
 
             return NoContent();
         }
@@ -144,7 +144,7 @@ namespace ProductsAPI.Controllers
         [HttpGet("{id}/options")]
         public async Task<IActionResult> GetOptionsByProductIdAsync(Guid id)
         {
-            var product = await _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
 
             if(product == null)
             {
@@ -159,7 +159,7 @@ namespace ProductsAPI.Controllers
         [HttpGet("{id}/options/{optionId}")]
         public async Task<IActionResult> GetOptionsByOptionIdAsync(Guid id, Guid optionId)
         {
-            var product = await _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
 
             if (product == null)
             {
@@ -181,7 +181,7 @@ namespace ProductsAPI.Controllers
         [HttpPost("{id}/options")]
         public async Task<IActionResult> CreateOptionAsync(Guid id, [FromBody] ProductOptionDto productOptionDto)
         {
-            var product = await _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
 
             if(product == null)
             {
@@ -190,7 +190,7 @@ namespace ProductsAPI.Controllers
 
             var productOption = _mapper.ToProductOption(productOptionDto);
 
-            await _productService.CreateOption(id, productOption);
+            await _productService.CreateOptionAsync(id, productOption);
 
             return Created($"{Request?.Scheme}://{Request?.Host}{Request?.PathBase}{Request?.Path}/{id}/options/{productOption?.Id}", productOptionDto);
         }
@@ -198,7 +198,7 @@ namespace ProductsAPI.Controllers
         [HttpPut("{id}/options/{optionId}")]
         public async Task<IActionResult> UpdateOptionAsync([FromBody] ProductOptionDto productOptionDto)
         {
-            var product = await _productService.GetProductById(productOptionDto.ProductId);
+            var product = await _productService.GetProductByIdAsync(productOptionDto.ProductId);
             var oldOption = product?.ProductOptions?.Where(p => p.Id == productOptionDto.Id).FirstOrDefault();
 
             if(oldOption == null)
@@ -208,7 +208,7 @@ namespace ProductsAPI.Controllers
 
             var productOption = _mapper.ToProductOption(productOptionDto);
 
-            var result = await _productService.UpdateOption(productOption);
+            var result = await _productService.UpdateOptionAsync(productOption);
 
             return Ok(result);
         }

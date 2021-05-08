@@ -18,19 +18,19 @@ namespace ProductsAPI.Repositories
             _context = context;
         }
 
-        public async Task<int> CreateOption(ProductOption productOption)
+        public async Task<int> CreateOptionAsync(ProductOption productOption)
         {
             await _context.ProductOptions.AddAsync(productOption);
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> CreateProduct(Product product)
+        public async Task<int> CreateProductAsync(Product product)
         {
             await _context.Products.AddAsync(product);
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> DeleteOption(Guid productOptionId)
+        public async Task<int> DeleteOptionAsync(Guid productOptionId)
         {
             var option = _context.ProductOptions.AsQueryable().Where(p => p.Id == productOptionId).FirstOrDefault();
             
@@ -43,7 +43,7 @@ namespace ProductsAPI.Repositories
         /// </summary>
         /// <param name="product">product</param>
         /// <returns>rows affected</returns>
-        public async Task<int> DeleteProduct(Product product)
+        public async Task<int> DeleteProductAsync(Product product)
         {
             if (product.ProductOptions?.Count > 0)
             {
@@ -54,7 +54,7 @@ namespace ProductsAPI.Repositories
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<List<Product>> GetAllProducts()
+        public async Task<List<Product>> GetAllProductsAsync()
         {
             var products = await _context.Products.AsQueryable().ToListAsync();
 
@@ -70,7 +70,7 @@ namespace ProductsAPI.Repositories
             return result;
         }
 
-        public async Task<Product> GetProductById(Guid id)
+        public async Task<Product> GetProductByIdAsync(Guid id)
         {
             var product = await _context.Products.AsQueryable().Where(p => p.Id == id).FirstOrDefaultAsync();
 
@@ -81,7 +81,7 @@ namespace ProductsAPI.Repositories
             return product;
         }
 
-        public async Task<int> UpdateOption(ProductOption productOption)
+        public async Task<int> UpdateOptionAsync(ProductOption productOption)
         {
             var productOptionEntity = await _context.ProductOptions.AsQueryable().Where(p => p.Id == productOption.Id).FirstOrDefaultAsync();
 
@@ -97,9 +97,9 @@ namespace ProductsAPI.Repositories
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> UpdateProduct(Product product)
+        public async Task<int> UpdateProductAsync(Product product)
         {
-            var productEntity = await GetProductById(product.Id);
+            var productEntity = await GetProductByIdAsync(product.Id);
 
             if(productEntity == null)
             {

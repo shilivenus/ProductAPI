@@ -16,28 +16,28 @@ namespace ProductsAPI.Services
             _productRepository = productRepository;
         }
 
-        public async Task<int> CreateOption(Guid id, ProductOption productOption)
+        public async Task<int> CreateOptionAsync(Guid id, ProductOption productOption)
         {
             productOption.ProductId = id;
 
-            return await _productRepository.CreateOption(productOption);
+            return await _productRepository.CreateOptionAsync(productOption);
         }
 
-        public async Task<int> CreateProduct(Product product)
+        public async Task<int> CreateProductAsync(Product product)
         {
-            return await _productRepository.CreateProduct(product);
+            return await _productRepository.CreateProductAsync(product);
         }
 
-        public async Task<int> DeleteOption(Guid productOptionId)
+        public async Task<int> DeleteOptionAsync(Guid productOptionId)
         {
-            return await _productRepository.DeleteOption(productOptionId);
+            return await _productRepository.DeleteOptionAsync(productOptionId);
         }
 
-        public async Task<int> DeleteProduct(Guid id)
+        public async Task<int> DeleteProductAsync(Guid id)
         {
-            var product = _productRepository.GetProductById(id);
+            var product = _productRepository.GetProductByIdAsync(id);
 
-            return await _productRepository.DeleteProduct(product.Result);
+            return await _productRepository.DeleteProductAsync(product.Result);
         }
 
         /// <summary>
@@ -45,9 +45,9 @@ namespace ProductsAPI.Services
         /// </summary>
         /// <param name="predicate">predicate of product</param>
         /// <returns>Ilist of Products</returns>
-        public async Task<IList<Product>> FindProduct(Predicate<Product> predicate)
+        public async Task<IList<Product>> FindProductAsync(Predicate<Product> predicate)
         {
-            var products = await _productRepository.GetAllProducts();
+            var products = await _productRepository.GetAllProductsAsync();
 
             if (predicate == null)
             {
@@ -64,19 +64,19 @@ namespace ProductsAPI.Services
             return productsByPredicate;
         }
 
-        public async Task<Product> GetProductById(Guid id)
+        public async Task<Product> GetProductByIdAsync(Guid id)
         {
-            return await _productRepository.GetProductById(id);
+            return await _productRepository.GetProductByIdAsync(id);
         }
 
-        public async Task<int> UpdateOption(ProductOption productOption)
+        public async Task<int> UpdateOptionAsync(ProductOption productOption)
         {
-            return await _productRepository.UpdateOption(productOption);
+            return await _productRepository.UpdateOptionAsync(productOption);
         }
 
-        public async Task<int> UpdateProduct(Product product)
+        public async Task<int> UpdateProductAsync(Product product)
         {
-            return await _productRepository.UpdateProduct(product);
+            return await _productRepository.UpdateProductAsync(product);
         }
     }
 }

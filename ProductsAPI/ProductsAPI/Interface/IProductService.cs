@@ -8,13 +8,13 @@ namespace ProductsAPI.Interface
 {
     public interface IProductService
     {
-        Task<IList<Product>> FindProduct(Predicate<Product> predicate);
-        Task<Product> GetProductById(Guid id);
-        Task<int> CreateProduct(Product product);
-        Task<int> UpdateProduct(Product product);
-        Task<int> DeleteProduct(Guid id);
-        Task<int> CreateOption(Guid id, ProductOption productOption);
-        Task<int> UpdateOption(ProductOption productOption);
-        Task<int> DeleteOption(Guid productOptionId);
+        Task<IList<Product>> FindProductAsync(Predicate<Product> predicate);
+        Task<Product> GetProductByIdAsync(Guid id);
+        Task<int> CreateProductAsync(Product product);
+        Task<int> UpdateProductAsync(Product product);
+        Task<int> DeleteProductAsync(Guid id);
+        Task<int> CreateOptionAsync(Guid id, ProductOption productOption);
+        Task<int> UpdateOptionAsync(ProductOption productOption);
+        Task<int> DeleteOptionAsync(Guid productOptionId);
     }
 }
