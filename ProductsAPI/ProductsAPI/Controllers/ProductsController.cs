@@ -111,6 +111,11 @@ namespace ProductsAPI.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Delete Product with given Id
+        /// </summary>
+        /// <param name="id">product Id</param>
+        /// <returns>httpstatus</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
@@ -126,6 +131,12 @@ namespace ProductsAPI.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Delete option with given option id
+        /// </summary>
+        /// <param name="id">product id</param>
+        /// <param name="optionId">option id</param>
+        /// <returns>httpstatus</returns>
         [HttpDelete("{id}/options/{optionId}")]
         public async Task<IActionResult> DeleteOptionAsync(Guid id, Guid optionId)
         {
@@ -141,6 +152,11 @@ namespace ProductsAPI.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Get options by product id
+        /// </summary>
+        /// <param name="id">product it</param>
+        /// <returns>List of options</returns>
         [HttpGet("{id}/options")]
         public async Task<IActionResult> GetOptionsByProductIdAsync(Guid id)
         {
@@ -156,6 +172,12 @@ namespace ProductsAPI.Controllers
             return Ok(productDto.ProductOptions);
         }
 
+        /// <summary>
+        /// Get options by option Id
+        /// </summary>
+        /// <param name="id">product id</param>
+        /// <param name="optionId">option id</param>
+        /// <returns>Option and httpstatus</returns>
         [HttpGet("{id}/options/{optionId}")]
         public async Task<IActionResult> GetOptionsByOptionIdAsync(Guid id, Guid optionId)
         {
@@ -178,6 +200,12 @@ namespace ProductsAPI.Controllers
             return Ok(productOptionDto);
         }
 
+        /// <summary>
+        /// Create option
+        /// </summary>
+        /// <param name="id">product id</param>
+        /// <param name="productOptionDto">product option details</param>
+        /// <returns>Url and product option details</returns>
         [HttpPost("{id}/options")]
         public async Task<IActionResult> CreateOptionAsync(Guid id, [FromBody] ProductOptionDto productOptionDto)
         {
@@ -195,6 +223,11 @@ namespace ProductsAPI.Controllers
             return Created($"{Request?.Scheme}://{Request?.Host}{Request?.PathBase}{Request?.Path}/{id}/options/{productOption?.Id}", productOptionDto);
         }
 
+        /// <summary>
+        /// Update option
+        /// </summary>
+        /// <param name="productOptionDto">product option details</param>
+        /// <returns>Rows updated and httpstatus</returns>
         [HttpPut("{id}/options/{optionId}")]
         public async Task<IActionResult> UpdateOptionAsync([FromBody] ProductOptionDto productOptionDto)
         {
