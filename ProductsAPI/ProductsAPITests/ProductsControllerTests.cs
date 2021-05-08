@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
 using ProductsAPI.Controllers;
 using ProductsAPI.DTO;
@@ -7,9 +6,6 @@ using ProductsAPI.Interface;
 using ProductsAPI.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace ProductsAPITests
@@ -213,7 +209,7 @@ namespace ProductsAPITests
         }
 
         [Fact]
-        public async void DeleteAsync_InvalidId_ReturnBadRequestStatus()
+        public async void DeleteAsync_InvalidId_ReturnNotFoundStatus()
         {
             //Arrange
             _productService.Setup(s => s.GetProductByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Product)null);
@@ -224,9 +220,8 @@ namespace ProductsAPITests
             var result = await productsController.DeleteAsync(new Guid());
 
             //Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal(400, badRequestResult.StatusCode);
-            Assert.Equal("Product 00000000-0000-0000-0000-000000000000 is not exist", badRequestResult.Value);
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+            Assert.Equal(404, notFoundResult.StatusCode);
         }
 
         [Fact]
@@ -246,7 +241,7 @@ namespace ProductsAPITests
         }
 
         [Fact]
-        public async void DeleteOptionAsync_InvalidId_ReturnBadRequestStatus()
+        public async void DeleteOptionAsync_InvalidId_ReturnNotFoundStatus()
         {
             //Arrange
             _productService.Setup(s => s.GetProductByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Product)null);
@@ -257,9 +252,8 @@ namespace ProductsAPITests
             var result = await productsController.DeleteOptionAsync(new Guid(), new Guid());
 
             //Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal(400, badRequestResult.StatusCode);
-            Assert.Equal("Product 00000000-0000-0000-0000-000000000000 is not exist", badRequestResult.Value);
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+            Assert.Equal(404, notFoundResult.StatusCode);
         }
 
         [Fact]
@@ -390,9 +384,8 @@ namespace ProductsAPITests
             var result = await productsController.UpdateOptionAsync(productOptionDto);
 
             //Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal(400, badRequestResult.StatusCode);
-            Assert.Equal("Product 1fa85f64-5717-4562-b3fc-2c963f66afa6 is not exist", badRequestResult.Value);
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+            Assert.Equal(404, notFoundResult.StatusCode);
         }
 
         [Fact]

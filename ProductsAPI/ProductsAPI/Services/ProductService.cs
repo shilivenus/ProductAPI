@@ -18,6 +18,14 @@ namespace ProductsAPI.Services
 
         public async Task<int> CreateOptionAsync(Guid id, ProductOption productOption)
         {
+            var product = await _productRepository.GetProductByIdAsync(id);
+            var option = product?.ProductOptions?.Where(p => p.Id == productOption.Id).FirstOrDefault();
+
+            if(option != null)
+            {
+                throw new Exception($"Cannot create product option of id {productOption.Id}, it already exist.");
+            }
+
             productOption.ProductId = id;
 
             return await _productRepository.CreateOptionAsync(productOption);
@@ -25,6 +33,13 @@ namespace ProductsAPI.Services
 
         public async Task<int> CreateProductAsync(Product product)
         {
+            var p = await _productRepository.GetProductByIdAsync(product.Id);
+
+            if (p != null)
+            {
+                throw new Exception($"Cannot create product of id {product.Id}, it already exist.");
+            }
+
             return await _productRepository.CreateProductAsync(product);
         }
 
@@ -45,7 +60,7 @@ namespace ProductsAPI.Services
         /// </summary>
         /// <param name="predicate">predicate of product</param>
         /// <returns>Ilist of Products</returns>
-        public async Task<IList<Product>> FindProductAsync(Predicate<Product> predicate)
+        public async Task<IList<Product>> FindProductAsync(Predicate<Product> predicate = null)
         {
             var products = await _productRepository.GetAllProductsAsync();
 

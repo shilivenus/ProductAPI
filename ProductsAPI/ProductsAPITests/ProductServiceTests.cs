@@ -10,6 +10,8 @@ namespace ProductsAPITests
 {
     public class ProductServiceTests
     {
+        private readonly Mock<IProductRepository> _productRepository = new Mock<IProductRepository>();
+
         [Fact]
         public async void FindProduct_NullPredicate_ReturnAllProducts()
         {
@@ -20,10 +22,9 @@ namespace ProductsAPITests
                 new Product(new Guid(), "ProductTwo", "ProductTwoDescription", (decimal)22.00, (decimal)1.00)
             };
 
-            var mockProductRepository = new Mock<IProductRepository>();
-            mockProductRepository.Setup(x => x.GetAllProductsAsync()).ReturnsAsync(products);
+            _productRepository.Setup(x => x.GetAllProductsAsync()).ReturnsAsync(products);
 
-            var service = new ProductService(mockProductRepository.Object);
+            var service = new ProductService(_productRepository.Object);
 
             //Act
             var result = await service.FindProductAsync(null);
@@ -49,10 +50,9 @@ namespace ProductsAPITests
                 new Product(new Guid(), "ProductTwo", "ProductTwoDescription", (decimal)22.00, (decimal)1.00)
             };
 
-            var mockProductRepository = new Mock<IProductRepository>();
-            mockProductRepository.Setup(x => x.GetAllProductsAsync()).ReturnsAsync(products);
+            _productRepository.Setup(x => x.GetAllProductsAsync()).ReturnsAsync(products);
 
-            var service = new ProductService(mockProductRepository.Object);
+            var service = new ProductService(_productRepository.Object);
 
             //Act
             var result = await service.FindProductAsync(x => x.Name == "ProductOne");
@@ -63,6 +63,36 @@ namespace ProductsAPITests
             Assert.Equal(products[0].Description, result[0].Description);
             Assert.Equal(products[0].Price, result[0].Price);
             Assert.Equal(products[0].DeliveryPrice, result[0].DeliveryPrice);
+        }
+
+        [Fact]
+        public async void CreateOptionAsync_InvalidProductOption_ThrowException()
+        {
+            //Arrange
+            var option = new ProductOption(new Guid(), new Guid(), "test", "test");
+            var options = new List<ProductOption>();
+            options.Add(option);
+
+            var product = new Product(new Guid(), "ProductOne", "ProductOneDescription", (decimal)11.00, (decimal)2.00, options);
+
+            _productRepository.Setup(x => x.GetProductByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
+
+            var service = new ProductService(_productRepository.Object);
+
+            //Assert
+            await Assert.ThrowsAsync<Exception>(() => service.CreateOptionAsync(new Guid(), option));
+        }
+
+        [Fact]
+        public async void CreateProductAsync_InvalidProduct_ThrowException()
+        {
+            //Arrange
+            _productRepository.Setup(x => x.GetProductByIdAsync(It.IsAny<Guid>())).ReturnsAsync(new Product());
+
+            var service = new ProductService(_productRepository.Object);
+
+            //Assert
+            await Assert.ThrowsAsync<Exception>(() => service.CreateProductAsync(new Product()));
         }
     }
 }

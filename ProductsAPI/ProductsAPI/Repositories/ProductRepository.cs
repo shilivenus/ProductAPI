@@ -76,43 +76,23 @@ namespace ProductsAPI.Repositories
 
             var options = await _context.ProductOptions.AsQueryable().Where(p => p.ProductId == id).ToListAsync();
 
-            product.ProductOptions = options;
+            if(product!=null)
+            {
+                product.ProductOptions = options;
+            }
 
             return product;
         }
 
         public async Task<int> UpdateOptionAsync(ProductOption productOption)
         {
-            var productOptionEntity = await _context.ProductOptions.AsQueryable().Where(p => p.Id == productOption.Id).FirstOrDefaultAsync();
-
-            if(productOptionEntity == null)
-            {
-                throw new Exception($"{productOption.Id} cannot be found in db");
-            }
-
-            productOptionEntity.Name = productOption.Name;
-            productOptionEntity.Description = productOption.Description;
-
-            _context.ProductOptions.Update(productOptionEntity);
+            _context.ProductOptions.Update(productOption);
             return await _context.SaveChangesAsync();
         }
 
         public async Task<int> UpdateProductAsync(Product product)
         {
-            var productEntity = await GetProductByIdAsync(product.Id);
-
-            if(productEntity == null)
-            {
-                throw new Exception($"{product.Id} cannot be found in db");
-            }
-            
-            productEntity.Name = product.Name;
-            productEntity.Description = product.Description;
-            productEntity.Price = product.Price;
-            productEntity.DeliveryPrice = product.DeliveryPrice;
-            productEntity.ProductOptions = product.ProductOptions;
-
-            _context.Products.Update(productEntity);
+            _context.Products.Update(product);
             return await _context.SaveChangesAsync();
         }
     }

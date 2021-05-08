@@ -8,7 +8,7 @@ namespace ProductsAPI.Interface
 {
     public interface IProductService
     {
-        Task<IList<Product>> FindProductAsync(Predicate<Product> predicate);
+        Task<IList<Product>> FindProductAsync(Predicate<Product> predicate = null);
         Task<Product> GetProductByIdAsync(Guid id);
         Task<int> CreateProductAsync(Product product);
         Task<int> UpdateProductAsync(Product product);

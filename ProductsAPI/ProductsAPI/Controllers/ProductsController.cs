@@ -34,7 +34,7 @@ namespace ProductsAPI.Controllers
 
             if (name == null)
             {
-                products = await _productService.FindProductAsync(null);
+                products = await _productService.FindProductAsync();
             }
             else
             {
@@ -99,12 +99,18 @@ namespace ProductsAPI.Controllers
 
             if (product == null)
             {
-                return BadRequest($"Product {id} is not exist");
+                return NotFound();
             }
 
             productDto.Id = id;
 
-            product = _mapper.ToProduct(productDto);
+            var productMappered = _mapper.ToProduct(productDto);
+
+            product.Name = productMappered.Name;
+            product.Description = productMappered.Description;
+            product.Price = productMappered.Price;
+            product.DeliveryPrice = productMappered.DeliveryPrice;
+            product.ProductOptions = productMappered.ProductOptions;
 
             var result = await _productService.UpdateProductAsync(product);
 
@@ -123,7 +129,7 @@ namespace ProductsAPI.Controllers
 
             if (product == null)
             {
-                return BadRequest($"Product {id} is not exist");
+                return NotFound();
             }
 
             await _productService.DeleteProductAsync(id);
@@ -144,7 +150,7 @@ namespace ProductsAPI.Controllers
 
             if (product == null)
             {
-                return BadRequest($"Product {id} is not exist");
+                return NotFound();
             }
 
             await _productService.DeleteOptionAsync(optionId);
@@ -213,7 +219,7 @@ namespace ProductsAPI.Controllers
 
             if(product == null)
             {
-                return BadRequest($"Product {id} is not exist");
+                return NotFound();
             }
 
             var productOption = _mapper.ToProductOption(productOptionDto);
@@ -232,16 +238,17 @@ namespace ProductsAPI.Controllers
         public async Task<IActionResult> UpdateOptionAsync([FromBody] ProductOptionDto productOptionDto)
         {
             var product = await _productService.GetProductByIdAsync(productOptionDto.ProductId);
-            var oldOption = product?.ProductOptions?.Where(p => p.Id == productOptionDto.Id).FirstOrDefault();
+            var option = product?.ProductOptions?.Where(p => p.Id == productOptionDto.Id).FirstOrDefault();
 
-            if(oldOption == null)
+            if(option == null)
             {
-                return BadRequest($"Product {productOptionDto.Id} is not exist");
+                return NotFound();
             }
 
-            var productOption = _mapper.ToProductOption(productOptionDto);
+            option.Name = productOptionDto.Name;
+            option.Description = productOptionDto.Description;
 
-            var result = await _productService.UpdateOptionAsync(productOption);
+            var result = await _productService.UpdateOptionAsync(option);
 
             return Ok(result);
         }
