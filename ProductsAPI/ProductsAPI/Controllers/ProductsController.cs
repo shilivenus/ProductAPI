@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using ProductsAPI.DTO;
 using ProductsAPI.Interface;
+using ProductsAPI.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,41 +14,47 @@ namespace ProductsAPI.Controllers
     public class ProductsController : Controller
     {
         private readonly IProductService _productService;
-        private readonly ILogger<ProductsController> _logger;
         private readonly IMapper _mapper;
 
-        public ProductsController(IProductService productService, ILogger<ProductsController> logger, IMapper mapper)
+        public ProductsController(IProductService productService, IMapper mapper)
         {
             _productService = productService;
-            _logger = logger;
             _mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string name)
+        public async Task<IActionResult> GetAsync([FromQuery] string name)
         {
-            if(name == null)
+            IList<Product> products;
+
+            if (name == null)
             {
-                var products = await _productService.FindProduct(null);
-
-                var productDtos = _mapper.ToProductDtos(products);
-
-                return Ok(productDtos);
+                products = await _productService.FindProduct(null);
             }
             else
             {
-                var products = await _productService.FindProduct(p => p.Name.Equals(name));
-
-                var productDtos = _mapper.ToProductDtos(products);
-
-                return Ok(productDtos);
+                products = await _productService.FindProduct(p => p.Name.Equals(name));
             }
+
+            if(products == null)
+            {
+                return NotFound();
+            }
+
+            var productDtos = _mapper.ToProductDtos(products);
+
+            return Ok(productDtos);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
+        public async Task<IActionResult> GetByIdAsync(Guid id)
         {
             var product = await _productService.GetProductById(id);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
 
             var productDto = _mapper.ToProductDto(product);
 
@@ -57,39 +64,26 @@ namespace ProductsAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAsync([FromBody] ProductDto productDto)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors);
-
-                foreach (var error in errors)
-                    _logger.LogError(error.ErrorMessage);
-
-                return BadRequest(ModelState);
-            }
-
             var product = _mapper.ToProduct(productDto);
 
-            var result = await _productService.CreateProduct(product);
+            await _productService.CreateProduct(product);
 
-            return Ok(result);
+            return Created($"{Request?.Scheme}://{Request?.Host}{Request?.PathBase}{Request?.Path}/{product?.Id}", productDto);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] ProductDto productDto)
         {
-            if (!ModelState.IsValid)
+            var product = await _productService.GetProductById(id);
+
+            if (product == null)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors);
-
-                foreach (var error in errors)
-                    _logger.LogError(error.ErrorMessage);
-
-                return BadRequest(ModelState);
+                return BadRequest($"Product {id} is not exist");
             }
 
             productDto.Id = id;
 
-            var product = _mapper.ToProduct(productDto);
+            product = _mapper.ToProduct(productDto);
 
             var result = await _productService.UpdateProduct(product);
 
@@ -97,25 +91,44 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> DeleteAsync(Guid id)
         {
+            var product = await _productService.GetProductById(id);
+
+            if (product == null)
+            {
+                return BadRequest($"Product {id} is not exist");
+            }
+
             await _productService.DeleteProduct(id);
 
             return NoContent();
         }
 
         [HttpDelete("{id}/options/{optionId}")]
-        public async Task<IActionResult> DeleteOptionAsync(Guid optionId)
+        public async Task<IActionResult> DeleteOptionAsync(Guid id, Guid optionId)
         {
+            var product = await _productService.GetProductById(id);
+
+            if (product == null)
+            {
+                return BadRequest($"Product {id} is not exist");
+            }
+
             await _productService.DeleteOption(optionId);
 
             return NoContent();
         }
 
         [HttpGet("{id}/options")]
-        public async Task<IActionResult> GetOptionsByProductId(Guid id)
+        public async Task<IActionResult> GetOptionsByProductIdAsync(Guid id)
         {
             var product = await _productService.GetProductById(id);
+
+            if(product == null)
+            {
+                return NotFound();
+            }
 
             var productDto = _mapper.ToProductDto(product);
 
@@ -123,46 +136,53 @@ namespace ProductsAPI.Controllers
         }
 
         [HttpGet("{id}/options/{optionId}")]
-        public async Task<IActionResult> GetOptionsByOptionId(Guid id, Guid optionId)
+        public async Task<IActionResult> GetOptionsByOptionIdAsync(Guid id, Guid optionId)
         {
             var product = await _productService.GetProductById(id);
 
+            if (product == null)
+            {
+                return NotFound();
+            }
+
             var productDto = _mapper.ToProductDto(product);
 
-            return Ok(productDto.ProductOptions.Where(p => p.Id == optionId));
+            var productOptionDto = productDto?.ProductOptions?.Where(p => p.Id == optionId).FirstOrDefault();
+
+            if(productOptionDto == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(productOptionDto);
         }
 
         [HttpPost("{id}/options")]
         public async Task<IActionResult> CreateOptionAsync(Guid id, [FromBody] ProductOptionDto productOptionDto)
         {
-            if (!ModelState.IsValid)
+            var product = await _productService.GetProductById(id);
+
+            if(product == null)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors);
-
-                foreach (var error in errors)
-                    _logger.LogError(error.ErrorMessage);
-
-                return BadRequest(ModelState);
+                return BadRequest($"Product {id} is not exist");
             }
 
             var productOption = _mapper.ToProductOption(productOptionDto);
 
-            var result = await _productService.CreateOption(id, productOption);
+            await _productService.CreateOption(id, productOption);
 
-            return Ok(result);
+            return Created($"{Request?.Scheme}://{Request?.Host}{Request?.PathBase}{Request?.Path}/{id}/options/{productOption?.Id}", productOptionDto);
         }
 
         [HttpPut("{id}/options/{optionId}")]
         public async Task<IActionResult> UpdateOptionAsync([FromBody] ProductOptionDto productOptionDto)
         {
-            if (!ModelState.IsValid)
+            var product = await _productService.GetProductById(productOptionDto.ProductId);
+            var oldOption = product?.ProductOptions?.Where(p => p.Id == productOptionDto.Id).FirstOrDefault();
+
+            if(oldOption == null)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors);
-
-                foreach (var error in errors)
-                    _logger.LogError(error.ErrorMessage);
-
-                return BadRequest(ModelState);
+                return BadRequest($"Product {productOptionDto.Id} is not exist");
             }
 
             var productOption = _mapper.ToProductOption(productOptionDto);
