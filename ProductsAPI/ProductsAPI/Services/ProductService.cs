@@ -40,6 +40,11 @@ namespace ProductsAPI.Services
             return await _productRepository.DeleteProduct(product.Result);
         }
 
+        /// <summary>
+        /// Find Products by predicate
+        /// </summary>
+        /// <param name="predicate">predicate of product</param>
+        /// <returns>Ilist of Products</returns>
         public async Task<IList<Product>> FindProduct(Predicate<Product> predicate)
         {
             var products = await _productRepository.GetAllProducts();

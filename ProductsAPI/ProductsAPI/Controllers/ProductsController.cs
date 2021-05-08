@@ -22,6 +22,11 @@ namespace ProductsAPI.Controllers
             _mapper = mapper;
         }
 
+        /// <summary>
+        /// Get all products based on qurey string name
+        /// </summary>
+        /// <param name="name">product name</param>
+        /// <returns>IList of products and httpstatus</returns>
         [HttpGet]
         public async Task<IActionResult> GetAsync([FromQuery] string name)
         {
@@ -46,6 +51,11 @@ namespace ProductsAPI.Controllers
             return Ok(productDtos);
         }
 
+        /// <summary>
+        /// Get product by Id
+        /// </summary>
+        /// <param name="id">product id</param>
+        /// <returns>Product and httpstatus</returns>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByIdAsync(Guid id)
         {
@@ -61,6 +71,11 @@ namespace ProductsAPI.Controllers
             return Ok(productDto);
         }
 
+        /// <summary>
+        /// Create product and its options
+        /// </summary>
+        /// <param name="productDto">productDto</param>
+        /// <returns>url of product and product details</returns>
         [HttpPost]
         public async Task<IActionResult> CreateAsync([FromBody] ProductDto productDto)
         {
@@ -71,6 +86,12 @@ namespace ProductsAPI.Controllers
             return Created($"{Request?.Scheme}://{Request?.Host}{Request?.PathBase}{Request?.Path}/{product?.Id}", productDto);
         }
 
+        /// <summary>
+        /// Update Product
+        /// </summary>
+        /// <param name="id">product id</param>
+        /// <param name="productDto">product details</param>
+        /// <returns>rows updated and http status</returns>
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] ProductDto productDto)
         {

@@ -17,6 +17,12 @@ namespace ProductsAPI.Middlewares
             _logger = logger;
         }
 
+        /// <summary>
+        /// This method is used to handle all
+        /// exception by middleware
+        /// </summary>
+        /// <param name="context">HttpContext</param>
+        /// <returns></returns>
         public async Task Invoke(HttpContext context)
         {
             try

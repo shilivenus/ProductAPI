@@ -38,6 +38,11 @@ namespace ProductsAPI.Repositories
             return await _context.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Delete product and its options
+        /// </summary>
+        /// <param name="product">product</param>
+        /// <returns>rows affected</returns>
         public async Task<int> DeleteProduct(Product product)
         {
             if (product.ProductOptions?.Count > 0)
@@ -78,13 +83,36 @@ namespace ProductsAPI.Repositories
 
         public async Task<int> UpdateOption(ProductOption productOption)
         {
-            _context.ProductOptions.Update(productOption);
+            var productOptionEntity = await _context.ProductOptions.AsQueryable().Where(p => p.Id == productOption.Id).FirstOrDefaultAsync();
+
+            if(productOptionEntity == null)
+            {
+                throw new Exception($"{productOption.Id} cannot be found in db");
+            }
+
+            productOptionEntity.Name = productOption.Name;
+            productOptionEntity.Description = productOption.Description;
+
+            _context.ProductOptions.Update(productOptionEntity);
             return await _context.SaveChangesAsync();
         }
 
         public async Task<int> UpdateProduct(Product product)
         {
-            _context.Products.Update(product);
+            var productEntity = await GetProductById(product.Id);
+
+            if(productEntity == null)
+            {
+                throw new Exception($"{product.Id} cannot be found in db");
+            }
+            
+            productEntity.Name = product.Name;
+            productEntity.Description = product.Description;
+            productEntity.Price = product.Price;
+            productEntity.DeliveryPrice = product.DeliveryPrice;
+            productEntity.ProductOptions = product.ProductOptions;
+
+            _context.Products.Update(productEntity);
             return await _context.SaveChangesAsync();
         }
     }
