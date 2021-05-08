@@ -1,6 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Configuration;
-using NPoco;
+﻿using Microsoft.EntityFrameworkCore;
+using ProductsAPI.DataAccess;
 using ProductsAPI.Interface;
 using ProductsAPI.Models;
 using System;
@@ -12,223 +11,89 @@ namespace ProductsAPI.Repositories
 {
     public class ProductRepository : IProductRepository
     {
-        private readonly string _connectionString;
+        private readonly ProductContext _context;
 
-        public ProductRepository(IConfiguration configuration)
+        public ProductRepository(ProductContext context)
         {
-            _connectionString = configuration.GetConnectionString("ProductDB");
+            _context = context;
         }
 
-        public async Task<int> CreateOption(ProductOption productOption)
+        public async Task<int> CreateOptionAsync(ProductOption productOption)
         {
-            using (var connection = new SqliteConnection(_connectionString))
-            {
-                connection.Open();
-
-                using (var db = new Database(connection, DatabaseType.SQLite))
-                {
-                    db.BeginTransaction();
-                    int result;
-
-                    try
-                    {
-                        result = await db.ExecuteAsync($"insert into ProductOptions (Id, ProductId, Name, Description) values ('{productOption.Id}', '{productOption.ProductId}', '{productOption.Name}', '{productOption.Description}')");
-                    }
-                    catch (Exception e)
-                    {
-                        db.AbortTransaction();
-                        throw;
-                    }
-
-                    db.CompleteTransaction();
-
-                    return result;
-                }
-            }
+            await _context.ProductOptions.AddAsync(productOption);
+            return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> CreateProduct(Product product)
+        public async Task<int> CreateProductAsync(Product product)
         {
-            using (var connection = new SqliteConnection(_connectionString))
-            {
-                connection.Open();
-
-                using (var db = new Database(connection, DatabaseType.SQLite))
-                {
-                    db.BeginTransaction();
-                    int result;
-
-                    try
-                    {
-                        result = await db.ExecuteAsync($"insert into Products (Id, Name, Description, Price, DeliveryPrice) values ('{product.Id}', '{product.Name}', '{product.Description}', {product.Price}, {product.DeliveryPrice})");
-
-                        if(product.ProductOptions?.Count > 0)
-                        {
-                            foreach(var option in product.ProductOptions)
-                            {
-                                result += await db.ExecuteAsync($"insert into ProductOptions (Id, ProductId, Name, Description) values ('{option.Id}', '{option.ProductId}', '{option.Name}', '{option.Description}')");
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        db.AbortTransaction();
-                        throw;
-                    }
-
-                    db.CompleteTransaction();
-
-                    return result;
-                }
-            }
+            await _context.Products.AddAsync(product);
+            return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> DeleteOption(Guid productOptionId)
+        public async Task<int> DeleteOptionAsync(Guid productOptionId)
         {
-            using (var connection = new SqliteConnection(_connectionString))
-            {
-                connection.Open();
-
-                using (var db = new Database(connection, DatabaseType.SQLite))
-                {
-                    db.BeginTransaction();
-                    int result;
-
-                    try
-                    {
-                        result = await db.ExecuteAsync($"delete from productoptions where id = '{productOptionId}' collate nocase");
-                    }
-                    catch (Exception e)
-                    {
-                        db.AbortTransaction();
-                        throw;
-                    }
-
-                    db.CompleteTransaction();
-
-                    return result;
-                }
-            }
+            var option = _context.ProductOptions.AsQueryable().Where(p => p.Id == productOptionId).FirstOrDefault();
+            
+            _context.ProductOptions.Remove(option);
+            return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> DeleteProduct(Product product)
+        /// <summary>
+        /// Delete product and its options
+        /// </summary>
+        /// <param name="product">product</param>
+        /// <returns>rows affected</returns>
+        public async Task<int> DeleteProductAsync(Product product)
         {
-            using (var connection = new SqliteConnection(_connectionString))
+            if (product.ProductOptions?.Count > 0)
             {
-                connection.Open();
-
-                using (var db = new Database(connection, DatabaseType.SQLite))
-                {
-                    db.BeginTransaction();
-                    int result = -1;
-
-                    try
-                    {
-                        if (product.ProductOptions?.Count > 0)
-                        {
-                            foreach (var option in product.ProductOptions)
-                            {
-                                result = await db.ExecuteAsync($"delete from productoptions where id = '{option.Id}' collate nocase");
-                            }
-                        }
-
-                        result += await db.ExecuteAsync($"delete from Products where id = '{product.Id}' collate nocase");
-                    }
-                    catch (Exception e)
-                    {
-                        db.AbortTransaction();
-                        throw;
-                    }
-
-                    db.CompleteTransaction();
-
-                    return result;
-                }
+                _context.ProductOptions.RemoveRange(product.ProductOptions);
             }
+
+            _context.Products.RemoveRange(product);
+            return await _context.SaveChangesAsync();
         }
 
-        public List<Product> GetAllProducts()
+        public async Task<List<Product>> GetAllProductsAsync()
         {
-            using (var connection = new SqliteConnection(_connectionString))
-            {
-                connection.Open();
+            var products = await _context.Products.AsQueryable().ToListAsync();
 
-                using (var db = new Database(connection, DatabaseType.SQLite))
-                {
-                    return db.FetchOneToMany<Product>(x => x.ProductOptions,
-                        "select p.*, po.* from Products p left join Productoptions po on p.Id = po.ProductId order by p.Id");
-                }
+            var result = new List<Product>();
+
+            foreach (var product in products)
+            {
+                var options = await _context.ProductOptions.AsQueryable().Where(p => p.ProductId == product.Id).ToListAsync();
+                product.ProductOptions = options;
+                result.Add(product);
             }
+
+            return result;
         }
 
-        public Product GetProductById(Guid id)
+        public async Task<Product> GetProductByIdAsync(Guid id)
         {
-            using (var connection = new SqliteConnection(_connectionString))
-            {
-                connection.Open();
+            var product = await _context.Products.AsQueryable().Where(p => p.Id == id).FirstOrDefaultAsync();
 
-                using (var db = new Database(connection, DatabaseType.SQLite))
-                {
-                    return db.FetchOneToMany<Product>(x => x.ProductOptions,
-                        $"select p.*, po.* from Products p left join Productoptions po on p.Id = po.ProductId where p.Id = '{id}' collate nocase").FirstOrDefault();
-                }
+            var options = await _context.ProductOptions.AsQueryable().Where(p => p.ProductId == id).ToListAsync();
+
+            if(product!=null)
+            {
+                product.ProductOptions = options;
             }
+
+            return product;
         }
 
-        public async Task<int> UpdateOption(ProductOption productOption)
+        public async Task<int> UpdateOptionAsync(ProductOption productOption)
         {
-            using (var connection = new SqliteConnection(_connectionString))
-            {
-                connection.Open();
-
-                using (var db = new Database(connection, DatabaseType.SQLite))
-                {
-                    db.BeginTransaction();
-                    int result;
-
-                    try
-                    {
-                        result = await db.ExecuteAsync($"update productoptions set name = '{productOption.Name}', description = '{productOption.Description}' where id = '{productOption.Id}' collate nocase");
-                    }
-                    catch (Exception e)
-                    {
-                        db.AbortTransaction();
-                        throw;
-                    }
-
-                    db.CompleteTransaction();
-
-                    return result;
-                }
-            }
+            _context.ProductOptions.Update(productOption);
+            return await _context.SaveChangesAsync();
         }
 
-        public async Task<int> UpdateProduct(Product product)
+        public async Task<int> UpdateProductAsync(Product product)
         {
-            using (var connection = new SqliteConnection(_connectionString))
-            {
-                connection.Open();
-
-                using (var db = new Database(connection, DatabaseType.SQLite))
-                {
-                    db.BeginTransaction();
-                    int result;
-
-                    try
-                    {
-                        result = await db.ExecuteAsync($"update Products set name = '{product.Name}', description = '{product.Description}', price = {product.Price}, deliveryprice = {product.DeliveryPrice} where id = '{product.Id}' collate nocase");
-                    }
-                    catch (Exception e)
-                    {
-                        db.AbortTransaction();
-                        throw;
-                    }
-
-                    db.CompleteTransaction();
-
-                    return result;
-                }
-            }
+            _context.Products.Update(product);
+            return await _context.SaveChangesAsync();
         }
     }
 }

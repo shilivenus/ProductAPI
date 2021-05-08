@@ -14,6 +14,8 @@ namespace ProductsAPI.Models
         public decimal DeliveryPrice { get; set; }
         public List<ProductOption> ProductOptions { get; set; }
 
+        public Product() { }
+
         public Product(Guid id, string name, string description, decimal price, decimal deliveryPrice, List<ProductOption> productOptions = null)
         {
             Id = id;

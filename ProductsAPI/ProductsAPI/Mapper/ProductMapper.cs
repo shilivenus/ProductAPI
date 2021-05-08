@@ -1,10 +1,7 @@
 ﻿using ProductsAPI.DTO;
 using ProductsAPI.Interface;
 using ProductsAPI.Models;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ProductsAPI.Mapper
 {
@@ -48,18 +45,6 @@ namespace ProductsAPI.Mapper
             }
 
             return new ProductDto(product.Id, product.Name, product.Description, product.Price, product.DeliveryPrice, productOptionsDto);
-        }
-
-        public IList<Product> ToProducts(IList<ProductDto> productDtos)
-        {
-            var products = new List<Product>();
-
-            foreach(var productDto in productDtos)
-            {
-                products.Add(ToProduct(productDto));
-            }
-
-            return products;
         }
 
         public IList<ProductDto> ToProductDtos(IList<Product> products)

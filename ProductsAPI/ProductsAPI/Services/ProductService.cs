@@ -1,5 +1,4 @@
-﻿using ProductsAPI.DTO;
-using ProductsAPI.Interface;
+﻿using ProductsAPI.Interface;
 using ProductsAPI.Models;
 using System;
 using System.Collections.Generic;
@@ -17,33 +16,53 @@ namespace ProductsAPI.Services
             _productRepository = productRepository;
         }
 
-        public async Task<int> CreateOption(Guid id, ProductOption productOption)
+        public async Task<int> CreateOptionAsync(Guid id, ProductOption productOption)
         {
+            var product = await _productRepository.GetProductByIdAsync(id);
+            var option = product?.ProductOptions?.Where(p => p.Id == productOption.Id).FirstOrDefault();
+
+            if(option != null)
+            {
+                throw new Exception($"Cannot create product option of id {productOption.Id}, it already exist.");
+            }
+
             productOption.ProductId = id;
 
-            return await _productRepository.CreateOption(productOption);
+            return await _productRepository.CreateOptionAsync(productOption);
         }
 
-        public async Task<int> CreateProduct(Product product)
+        public async Task<int> CreateProductAsync(Product product)
         {
-            return await _productRepository.CreateProduct(product);
+            var p = await _productRepository.GetProductByIdAsync(product.Id);
+
+            if (p != null)
+            {
+                throw new Exception($"Cannot create product of id {product.Id}, it already exist.");
+            }
+
+            return await _productRepository.CreateProductAsync(product);
         }
 
-        public async Task<int> DeleteOption(Guid productOptionId)
+        public async Task<int> DeleteOptionAsync(Guid productOptionId)
         {
-            return await _productRepository.DeleteOption(productOptionId);
+            return await _productRepository.DeleteOptionAsync(productOptionId);
         }
 
-        public async Task<int> DeleteProduct(Guid id)
+        public async Task<int> DeleteProductAsync(Guid id)
         {
-            var product = _productRepository.GetProductById(id);
+            var product = _productRepository.GetProductByIdAsync(id);
 
-            return await _productRepository.DeleteProduct(product);
+            return await _productRepository.DeleteProductAsync(product.Result);
         }
 
-        public IList<Product> FindProduct(Predicate<Product> predicate)
+        /// <summary>
+        /// Find Products by predicate
+        /// </summary>
+        /// <param name="predicate">predicate of product</param>
+        /// <returns>Ilist of Products</returns>
+        public async Task<IList<Product>> FindProductAsync(Predicate<Product> predicate = null)
         {
-            var products = _productRepository.GetAllProducts();
+            var products = await _productRepository.GetAllProductsAsync();
 
             if (predicate == null)
             {
@@ -60,19 +79,19 @@ namespace ProductsAPI.Services
             return productsByPredicate;
         }
 
-        public Product GetProductById(Guid id)
+        public async Task<Product> GetProductByIdAsync(Guid id)
         {
-            return _productRepository.GetProductById(id);
+            return await _productRepository.GetProductByIdAsync(id);
         }
 
-        public async Task<int> UpdateOption(ProductOption productOption)
+        public async Task<int> UpdateOptionAsync(ProductOption productOption)
         {
-            return await _productRepository.UpdateOption(productOption);
+            return await _productRepository.UpdateOptionAsync(productOption);
         }
 
-        public async Task<int> UpdateProduct(Product product)
+        public async Task<int> UpdateProductAsync(Product product)
         {
-            return await _productRepository.UpdateProduct(product);
+            return await _productRepository.UpdateProductAsync(product);
         }
     }
 }

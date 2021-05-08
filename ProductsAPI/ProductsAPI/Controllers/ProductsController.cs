@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using ProductsAPI.DTO;
 using ProductsAPI.Interface;
+using ProductsAPI.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,167 +14,241 @@ namespace ProductsAPI.Controllers
     public class ProductsController : Controller
     {
         private readonly IProductService _productService;
-        private readonly ILogger<ProductsController> _logger;
         private readonly IMapper _mapper;
 
-        public ProductsController(IProductService productService, ILogger<ProductsController> logger, IMapper mapper)
+        public ProductsController(IProductService productService, IMapper mapper)
         {
             _productService = productService;
-            _logger = logger;
             _mapper = mapper;
         }
 
+        /// <summary>
+        /// Get all products based on qurey string name
+        /// </summary>
+        /// <param name="name">product name</param>
+        /// <returns>IList of products and httpstatus</returns>
         [HttpGet]
-        public IActionResult Get([FromQuery] string name)
+        public async Task<IActionResult> GetAsync([FromQuery] string name)
         {
-            if(name == null)
+            IList<Product> products;
+
+            if (name == null)
             {
-                var products = _productService.FindProduct(null);
-
-                var productDtos = _mapper.ToProductDtos(products);
-
-                return Ok(productDtos);
+                products = await _productService.FindProductAsync();
             }
             else
             {
-                var products = _productService.FindProduct(p => p.Name.Equals(name));
-
-                var productDtos = _mapper.ToProductDtos(products);
-
-                return Ok(productDtos);
+                products = await _productService.FindProductAsync(p => p.Name.Equals(name));
             }
+
+            if(products == null)
+            {
+                return NotFound();
+            }
+
+            var productDtos = _mapper.ToProductDtos(products);
+
+            return Ok(productDtos);
         }
 
+        /// <summary>
+        /// Get product by Id
+        /// </summary>
+        /// <param name="id">product id</param>
+        /// <returns>Product and httpstatus</returns>
         [HttpGet("{id}")]
-        public IActionResult GetById(Guid id)
+        public async Task<IActionResult> GetByIdAsync(Guid id)
         {
-            var product = _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
 
             var productDto = _mapper.ToProductDto(product);
 
             return Ok(productDto);
         }
 
+        /// <summary>
+        /// Create product and its options
+        /// </summary>
+        /// <param name="productDto">productDto</param>
+        /// <returns>url of product and product details</returns>
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAsync([FromBody] ProductDto productDto)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors);
-
-                foreach (var error in errors)
-                    _logger.LogError(error.ErrorMessage);
-
-                return BadRequest(ModelState);
-            }
-
             var product = _mapper.ToProduct(productDto);
 
-            var result = await _productService.CreateProduct(product);
+            await _productService.CreateProductAsync(product);
 
-            return Ok(result);
+            return Created($"{Request?.Scheme}://{Request?.Host}{Request?.PathBase}{Request?.Path}/{product?.Id}", productDto);
         }
 
+        /// <summary>
+        /// Update Product
+        /// </summary>
+        /// <param name="id">product id</param>
+        /// <param name="productDto">product details</param>
+        /// <returns>rows updated and http status</returns>
         [HttpPut("{id}")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] ProductDto productDto)
         {
-            if (!ModelState.IsValid)
+            var product = await _productService.GetProductByIdAsync(id);
+
+            if (product == null)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors);
-
-                foreach (var error in errors)
-                    _logger.LogError(error.ErrorMessage);
-
-                return BadRequest(ModelState);
+                return NotFound();
             }
 
             productDto.Id = id;
 
-            var product = _mapper.ToProduct(productDto);
+            var productMappered = _mapper.ToProduct(productDto);
 
-            var result = await _productService.UpdateProduct(product);
+            product.Name = productMappered.Name;
+            product.Description = productMappered.Description;
+            product.Price = productMappered.Price;
+            product.DeliveryPrice = productMappered.DeliveryPrice;
+            product.ProductOptions = productMappered.ProductOptions;
+
+            var result = await _productService.UpdateProductAsync(product);
 
             return Ok(result);
         }
 
+        /// <summary>
+        /// Delete Product with given Id
+        /// </summary>
+        /// <param name="id">product Id</param>
+        /// <returns>httpstatus</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
-            var product = _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
 
-            await _productService.CreateProduct(product);
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            await _productService.DeleteProductAsync(id);
 
             return NoContent();
         }
 
+        /// <summary>
+        /// Delete option with given option id
+        /// </summary>
+        /// <param name="id">product id</param>
+        /// <param name="optionId">option id</param>
+        /// <returns>httpstatus</returns>
         [HttpDelete("{id}/options/{optionId}")]
-        public async Task<IActionResult> DeleteOptionAsync(Guid optionId)
+        public async Task<IActionResult> DeleteOptionAsync(Guid id, Guid optionId)
         {
-            await _productService.DeleteOption(optionId);
+            var product = await _productService.GetProductByIdAsync(id);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            await _productService.DeleteOptionAsync(optionId);
 
             return NoContent();
         }
 
+        /// <summary>
+        /// Get options by product id
+        /// </summary>
+        /// <param name="id">product it</param>
+        /// <returns>List of options</returns>
         [HttpGet("{id}/options")]
-        public IActionResult GetOptionsByProductId(Guid id)
+        public async Task<IActionResult> GetOptionsByProductIdAsync(Guid id)
         {
-            var product = _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
+
+            if(product == null)
+            {
+                return NotFound();
+            }
 
             var productDto = _mapper.ToProductDto(product);
 
             return Ok(productDto.ProductOptions);
         }
 
+        /// <summary>
+        /// Get options by option Id
+        /// </summary>
+        /// <param name="id">product id</param>
+        /// <param name="optionId">option id</param>
+        /// <returns>Option and httpstatus</returns>
         [HttpGet("{id}/options/{optionId}")]
-        public IActionResult GetOptionsByOptionId(Guid id, Guid optionId)
+        public async Task<IActionResult> GetOptionsByOptionIdAsync(Guid id, Guid optionId)
         {
-            var product = _productService.GetProductById(id);
+            var product = await _productService.GetProductByIdAsync(id);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
 
             var productDto = _mapper.ToProductDto(product);
 
-            return Ok(productDto.ProductOptions.Where(p => p.Id == optionId));
+            var productOptionDto = productDto?.ProductOptions?.Where(p => p.Id == optionId).FirstOrDefault();
+
+            if(productOptionDto == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(productOptionDto);
         }
 
+        /// <summary>
+        /// Create option
+        /// </summary>
+        /// <param name="id">product id</param>
+        /// <param name="productOptionDto">product option details</param>
+        /// <returns>Url and product option details</returns>
         [HttpPost("{id}/options")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateOptionAsync(Guid id, [FromBody] ProductOptionDto productOptionDto)
         {
-            if (!ModelState.IsValid)
+            var product = await _productService.GetProductByIdAsync(id);
+
+            if(product == null)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors);
-
-                foreach (var error in errors)
-                    _logger.LogError(error.ErrorMessage);
-
-                return BadRequest(ModelState);
+                return NotFound();
             }
 
             var productOption = _mapper.ToProductOption(productOptionDto);
 
-            var result = await _productService.CreateOption(id, productOption);
+            await _productService.CreateOptionAsync(id, productOption);
 
-            return Ok(result);
+            return Created($"{Request?.Scheme}://{Request?.Host}{Request?.PathBase}{Request?.Path}/{id}/options/{productOption?.Id}", productOptionDto);
         }
 
+        /// <summary>
+        /// Update option
+        /// </summary>
+        /// <param name="productOptionDto">product option details</param>
+        /// <returns>Rows updated and httpstatus</returns>
         [HttpPut("{id}/options/{optionId}")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateOptionAsync([FromBody] ProductOptionDto productOptionDto)
         {
-            if (!ModelState.IsValid)
+            var product = await _productService.GetProductByIdAsync(productOptionDto.ProductId);
+            var option = product?.ProductOptions?.Where(p => p.Id == productOptionDto.Id).FirstOrDefault();
+
+            if(option == null)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors);
-
-                foreach (var error in errors)
-                    _logger.LogError(error.ErrorMessage);
-
-                return BadRequest(ModelState);
+                return NotFound();
             }
 
-            var productOption = _mapper.ToProductOption(productOptionDto);
+            option.Name = productOptionDto.Name;
+            option.Description = productOptionDto.Description;
 
-            var result = await _productService.UpdateOption(productOption);
+            var result = await _productService.UpdateOptionAsync(option);
 
             return Ok(result);
         }
