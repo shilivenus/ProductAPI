@@ -226,7 +226,7 @@ namespace ProductsAPI.Controllers
 
             await _productService.CreateOptionAsync(id, productOption);
 
-            return Created($"{Request?.Scheme}://{Request?.Host}{Request?.PathBase}{Request?.Path}/{id}/options/{productOption?.Id}", productOptionDto);
+            return Created($"{Request?.Scheme}://{Request?.Host}{Request?.PathBase}{Request?.Path}/{productOption?.Id}", productOptionDto);
         }
 
         /// <summary>

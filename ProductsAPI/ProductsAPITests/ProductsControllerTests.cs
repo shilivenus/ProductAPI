@@ -363,7 +363,7 @@ namespace ProductsAPITests
             //Assert
             var createResult = Assert.IsType<CreatedResult>(result);
             Assert.Equal(201, createResult.StatusCode);
-            Assert.Equal(":///0643ccf0-ab00-4862-b3c5-40e2731abcc9/options/", createResult.Location);
+            Assert.Equal(":///", createResult.Location);
             var resultproductOptionDto = (ProductOptionDto)createResult.Value;
             Assert.Equal(new Guid("1FA85F64-5717-4562-B3FC-2C963F66AFA6"), resultproductOptionDto.Id);
             Assert.Equal(new Guid("0643CCF0-AB00-4862-B3C5-40E2731ABCC9"), resultproductOptionDto.ProductId);
