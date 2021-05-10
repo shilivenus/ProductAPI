@@ -18,23 +18,9 @@ namespace ProductsAPI.Repositories
             _context = context;
         }
 
-        public async Task<int> CreateOptionAsync(ProductOption productOption)
-        {
-            await _context.ProductOptions.AddAsync(productOption);
-            return await _context.SaveChangesAsync();
-        }
-
         public async Task<int> CreateProductAsync(Product product)
         {
             await _context.Products.AddAsync(product);
-            return await _context.SaveChangesAsync();
-        }
-
-        public async Task<int> DeleteOptionAsync(Guid productOptionId)
-        {
-            var option = _context.ProductOptions.AsQueryable().Where(p => p.Id == productOptionId).FirstOrDefault();
-            
-            _context.ProductOptions.Remove(option);
             return await _context.SaveChangesAsync();
         }
 
@@ -84,14 +70,15 @@ namespace ProductsAPI.Repositories
             return product;
         }
 
-        public async Task<int> UpdateOptionAsync(ProductOption productOption)
+        public async Task<int> UpdateProductAsync(Product product, ProductOption productOption = null)
         {
-            _context.ProductOptions.Update(productOption);
-            return await _context.SaveChangesAsync();
-        }
+            if(productOption != null)
+            {
+                product.ProductOptions.Add(productOption);
 
-        public async Task<int> UpdateProductAsync(Product product)
-        {
+                _context.Entry(productOption).State = EntityState.Added;
+            }
+
             _context.Products.Update(product);
             return await _context.SaveChangesAsync();
         }

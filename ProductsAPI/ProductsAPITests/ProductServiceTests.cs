@@ -66,24 +66,6 @@ namespace ProductsAPITests
         }
 
         [Fact]
-        public async void CreateOptionAsync_InvalidProductOption_ThrowException()
-        {
-            //Arrange
-            var option = new ProductOption(new Guid(), new Guid(), "test", "test");
-            var options = new List<ProductOption>();
-            options.Add(option);
-
-            var product = new Product(new Guid(), "ProductOne", "ProductOneDescription", (decimal)11.00, (decimal)2.00, options);
-
-            _productRepository.Setup(x => x.GetProductByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
-
-            var service = new ProductService(_productRepository.Object);
-
-            //Assert
-            await Assert.ThrowsAsync<Exception>(() => service.CreateOptionAsync(new Guid(), option));
-        }
-
-        [Fact]
         public async void CreateProductAsync_InvalidProduct_ThrowException()
         {
             //Arrange
@@ -93,6 +75,22 @@ namespace ProductsAPITests
 
             //Assert
             await Assert.ThrowsAsync<Exception>(() => service.CreateProductAsync(new Product()));
+        }
+
+        [Fact]
+        public async void UpdateProductAsync_InvalidProductOption_ThrowException()
+        {
+            //Arrange
+            var options = new List<ProductOption>()
+            { 
+                new ProductOption(new Guid(), new Guid(), "test", "test")       
+            };
+            var product = new Product(new Guid(), "ProductOne", "ProductOneDescription", (decimal)11.00, (decimal)2.00, options);
+
+            var service = new ProductService(_productRepository.Object);
+
+            //Assert
+            await Assert.ThrowsAsync<Exception>(() => service.UpdateProductAsync(product, options[0]));
         }
     }
 }

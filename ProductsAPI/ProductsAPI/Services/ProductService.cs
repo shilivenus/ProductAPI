@@ -16,21 +16,6 @@ namespace ProductsAPI.Services
             _productRepository = productRepository;
         }
 
-        public async Task<int> CreateOptionAsync(Guid id, ProductOption productOption)
-        {
-            var product = await _productRepository.GetProductByIdAsync(id);
-            var option = product?.ProductOptions?.Where(p => p.Id == productOption.Id).FirstOrDefault();
-
-            if(option != null)
-            {
-                throw new Exception($"Cannot create product option of id {productOption.Id}, it already exist.");
-            }
-
-            productOption.ProductId = id;
-
-            return await _productRepository.CreateOptionAsync(productOption);
-        }
-
         public async Task<int> CreateProductAsync(Product product)
         {
             var p = await _productRepository.GetProductByIdAsync(product.Id);
@@ -41,11 +26,6 @@ namespace ProductsAPI.Services
             }
 
             return await _productRepository.CreateProductAsync(product);
-        }
-
-        public async Task<int> DeleteOptionAsync(Guid productOptionId)
-        {
-            return await _productRepository.DeleteOptionAsync(productOptionId);
         }
 
         public async Task<int> DeleteProductAsync(Guid id)
@@ -84,14 +64,19 @@ namespace ProductsAPI.Services
             return await _productRepository.GetProductByIdAsync(id);
         }
 
-        public async Task<int> UpdateOptionAsync(ProductOption productOption)
+        public async Task<int> UpdateProductAsync(Product product, ProductOption productOption = null)
         {
-            return await _productRepository.UpdateOptionAsync(productOption);
-        }
+            if(productOption != null && product != null)
+            {
+                var option = product?.ProductOptions?.Where(p => p.Id == productOption.Id).FirstOrDefault();
 
-        public async Task<int> UpdateProductAsync(Product product)
-        {
-            return await _productRepository.UpdateProductAsync(product);
+                if (option != null)
+                {
+                    throw new Exception($"Cannot create product option of id {productOption.Id}, it already exist.");
+                }
+            }
+
+            return await _productRepository.UpdateProductAsync(product, productOption);
         }
     }
 }

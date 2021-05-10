@@ -195,7 +195,7 @@ namespace ProductsAPITests
 
             _productService.Setup(s => s.GetProductByIdAsync(It.IsAny<Guid>())).ReturnsAsync(new Product());
             _mapper.Setup(m => m.ToProduct(It.IsAny<ProductDto>())).Returns(new Product());
-            _productService.Setup(s => s.UpdateProductAsync(It.IsAny<Product>())).ReturnsAsync(1);
+            _productService.Setup(s => s.UpdateProductAsync(It.IsAny<Product>(), null)).ReturnsAsync(1);
 
             var productsController = new ProductsController(_productService.Object, _mapper.Object);
 
@@ -260,7 +260,12 @@ namespace ProductsAPITests
         public async void DeleteOptionAsync_ValidId_ReturnNoContentStatus()
         {
             //Arrange
-            _productService.Setup(s => s.GetProductByIdAsync(It.IsAny<Guid>())).ReturnsAsync(new Product());
+            var product = new Product
+            {
+                ProductOptions = new List<ProductOption>() { new ProductOption() }
+            };
+            _productService.Setup(s => s.GetProductByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
+            _productService.Setup(s => s.UpdateProductAsync(It.IsAny<Product>(), null)).ReturnsAsync(1);
 
             var productsController = new ProductsController(_productService.Object, _mapper.Object);
 
@@ -400,7 +405,7 @@ namespace ProductsAPITests
             var product = new Product(new Guid("0643CCF0-AB00-4862-B3C5-40E2731ABCC9"), "ProductOne", "ProductOneDescription", (decimal)11.00, (decimal)2.00, productOptions);
 
             _productService.Setup(s => s.GetProductByIdAsync(It.IsAny<Guid>())).ReturnsAsync(product);
-            _productService.Setup(s => s.UpdateOptionAsync(It.IsAny<ProductOption>())).ReturnsAsync(1);
+            _productService.Setup(s => s.UpdateProductAsync(It.IsAny<Product>(), null)).ReturnsAsync(1);
 
             var productsController = new ProductsController(_productService.Object, _mapper.Object);
 

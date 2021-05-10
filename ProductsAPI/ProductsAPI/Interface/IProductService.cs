@@ -11,10 +11,7 @@ namespace ProductsAPI.Interface
         Task<IList<Product>> FindProductAsync(Predicate<Product> predicate = null);
         Task<Product> GetProductByIdAsync(Guid id);
         Task<int> CreateProductAsync(Product product);
-        Task<int> UpdateProductAsync(Product product);
+        Task<int> UpdateProductAsync(Product product, ProductOption productOption = null);
         Task<int> DeleteProductAsync(Guid id);
-        Task<int> CreateOptionAsync(Guid id, ProductOption productOption);
-        Task<int> UpdateOptionAsync(ProductOption productOption);
-        Task<int> DeleteOptionAsync(Guid productOptionId);
     }
 }

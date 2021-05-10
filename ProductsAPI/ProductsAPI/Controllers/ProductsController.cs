@@ -147,13 +147,16 @@ namespace ProductsAPI.Controllers
         public async Task<IActionResult> DeleteOptionAsync(Guid id, Guid optionId)
         {
             var product = await _productService.GetProductByIdAsync(id);
+            var option = product?.ProductOptions?.Where(p => p.Id == optionId).FirstOrDefault();
 
-            if (product == null)
+            if (option == null)
             {
                 return NotFound();
             }
 
-            await _productService.DeleteOptionAsync(optionId);
+            product.ProductOptions.Remove(option);
+
+            await _productService.UpdateProductAsync(product);
 
             return NoContent();
         }
@@ -224,7 +227,7 @@ namespace ProductsAPI.Controllers
 
             var productOption = _mapper.ToProductOption(productOptionDto);
 
-            await _productService.CreateOptionAsync(id, productOption);
+            await _productService.UpdateProductAsync(product, productOption);
 
             return Created($"{Request?.Scheme}://{Request?.Host}{Request?.PathBase}{Request?.Path}/{productOption?.Id}", productOptionDto);
         }
@@ -248,7 +251,7 @@ namespace ProductsAPI.Controllers
             option.Name = productOptionDto.Name;
             option.Description = productOptionDto.Description;
 
-            var result = await _productService.UpdateOptionAsync(option);
+            var result = await _productService.UpdateProductAsync(product);
 
             return Ok(result);
         }
